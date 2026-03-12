@@ -1,77 +1,82 @@
 import java.util.*;
 
 /**
- * UseCase1AcademicPlagiarismDetection
- * Academic plagiarism detection system using n-gram hashing.
+ * UseCase2CodeSimilarityDetection
+ * Detects similarity between source codes using n-gram hashing.
  */
 
-class AcademicPlagiarismDetector {
+class CodeSimilarityDetector {
 
     private HashMap<String, Set<String>> ngramIndex = new HashMap<>();
-    private int n = 5; // 5-gram window
+    private int n = 4; // 4 token window for code
 
-    public void addDocument(String docId, String text) {
+    public void addCode(String codeId, String code) {
 
-        String[] words = text.toLowerCase().split("\\s+");
+        String[] tokens = code.replaceAll("[^a-zA-Z0-9]", " ")
+                .toLowerCase()
+                .split("\\s+");
 
-        for (int i = 0; i <= words.length - n; i++) {
+        for (int i = 0; i <= tokens.length - n; i++) {
 
-            StringBuilder ngramBuilder = new StringBuilder();
+            StringBuilder gram = new StringBuilder();
 
             for (int j = 0; j < n; j++) {
-                ngramBuilder.append(words[i + j]).append(" ");
+                gram.append(tokens[i + j]).append(" ");
             }
 
-            String ngram = ngramBuilder.toString().trim();
+            String ngram = gram.toString().trim();
 
             ngramIndex.putIfAbsent(ngram, new HashSet<>());
-            ngramIndex.get(ngram).add(docId);
+            ngramIndex.get(ngram).add(codeId);
         }
     }
 
-    public void analyzeDocument(String docId, String text) {
+    public void analyzeCode(String codeId, String code) {
 
-        String[] words = text.toLowerCase().split("\\s+");
+        String[] tokens = code.replaceAll("[^a-zA-Z0-9]", " ")
+                .toLowerCase()
+                .split("\\s+");
 
-        int totalNgrams = Math.max(words.length - n + 1, 0);
+        int totalNgrams = Math.max(tokens.length - n + 1, 0);
 
-        HashMap<String, Integer> matches = new HashMap<>();
+        HashMap<String, Integer> matchCount = new HashMap<>();
 
-        for (int i = 0; i <= words.length - n; i++) {
+        for (int i = 0; i <= tokens.length - n; i++) {
 
-            StringBuilder ngramBuilder = new StringBuilder();
+            StringBuilder gram = new StringBuilder();
 
             for (int j = 0; j < n; j++) {
-                ngramBuilder.append(words[i + j]).append(" ");
+                gram.append(tokens[i + j]).append(" ");
             }
 
-            String ngram = ngramBuilder.toString().trim();
+            String ngram = gram.toString().trim();
 
             if (ngramIndex.containsKey(ngram)) {
 
-                for (String existingDoc : ngramIndex.get(ngram)) {
-                    matches.put(existingDoc,
-                            matches.getOrDefault(existingDoc, 0) + 1);
+                for (String doc : ngramIndex.get(ngram)) {
+                    matchCount.put(doc,
+                            matchCount.getOrDefault(doc, 0) + 1);
                 }
             }
         }
 
-        System.out.println("Analyzing Document: " + docId);
-        System.out.println("Extracted " + totalNgrams + " n-grams\n");
+        System.out.println("Analyzing Code: " + codeId);
+        System.out.println("Extracted " + totalNgrams + " token-grams\n");
 
-        for (String doc : matches.keySet()) {
+        for (String doc : matchCount.keySet()) {
 
-            int matchCount = matches.get(doc);
-            double similarity = (matchCount * 100.0) / totalNgrams;
+            int matches = matchCount.get(doc);
 
-            System.out.println("Found " + matchCount +
-                    " matching n-grams with \"" + doc + "\"");
+            double similarity = (matches * 100.0) / totalNgrams;
+
+            System.out.println("Found " + matches +
+                    " matching token-grams with \"" + doc + "\"");
 
             System.out.printf("Similarity: %.2f%% ", similarity);
 
             if (similarity > 60) {
-                System.out.println("(PLAGIARISM DETECTED)");
-            } else if (similarity > 10) {
+                System.out.println("(CODE COPYING DETECTED)");
+            } else if (similarity > 15) {
                 System.out.println("(Suspicious)");
             } else {
                 System.out.println("(Low similarity)");
@@ -86,21 +91,20 @@ public class  PlagiarismDetectionSystem{
 
     public static void main(String[] args) {
 
-        AcademicPlagiarismDetector detector =
-                new AcademicPlagiarismDetector();
+        CodeSimilarityDetector detector = new CodeSimilarityDetector();
 
-        String essay1 =
-                "Artificial intelligence is transforming the world of technology and science";
+        String code1 =
+                "public int add(int a int b) { return a + b; }";
 
-        String essay2 =
-                "Artificial intelligence is transforming the world of technology rapidly today";
+        String code2 =
+                "public int sum(int x int y) { return x + y; }";
 
-        String newEssay =
-                "Artificial intelligence is transforming the world of technology in modern education";
+        String newCode =
+                "public int addNumbers(int a int b) { return a + b; }";
 
-        detector.addDocument("essay_089.txt", essay1);
-        detector.addDocument("essay_092.txt", essay2);
+        detector.addCode("code_001.java", code1);
+        detector.addCode("code_002.java", code2);
 
-        detector.analyzeDocument("essay_123.txt", newEssay);
+        detector.analyzeCode("submission_123.java", newCode);
     }
 }
