@@ -1,52 +1,48 @@
 import java.util.*;
 
 /**
- * UseCase2CodeSimilarityDetection
- * Detects similarity between source codes using n-gram hashing.
+ * UseCase3DocumentDeduplication
+ * Detects duplicate or highly similar documents using n-gram hashing.
  */
 
-class CodeSimilarityDetector {
+class DocumentDeduplicator {
 
     private HashMap<String, Set<String>> ngramIndex = new HashMap<>();
-    private int n = 4; // 4 token window for code
+    private int n = 5; // 5-gram window
 
-    public void addCode(String codeId, String code) {
+    public void addDocument(String docId, String text) {
 
-        String[] tokens = code.replaceAll("[^a-zA-Z0-9]", " ")
-                .toLowerCase()
-                .split("\\s+");
+        String[] words = text.toLowerCase().split("\\s+");
 
-        for (int i = 0; i <= tokens.length - n; i++) {
+        for (int i = 0; i <= words.length - n; i++) {
 
             StringBuilder gram = new StringBuilder();
 
             for (int j = 0; j < n; j++) {
-                gram.append(tokens[i + j]).append(" ");
+                gram.append(words[i + j]).append(" ");
             }
 
             String ngram = gram.toString().trim();
 
             ngramIndex.putIfAbsent(ngram, new HashSet<>());
-            ngramIndex.get(ngram).add(codeId);
+            ngramIndex.get(ngram).add(docId);
         }
     }
 
-    public void analyzeCode(String codeId, String code) {
+    public void checkDuplicate(String docId, String text) {
 
-        String[] tokens = code.replaceAll("[^a-zA-Z0-9]", " ")
-                .toLowerCase()
-                .split("\\s+");
+        String[] words = text.toLowerCase().split("\\s+");
 
-        int totalNgrams = Math.max(tokens.length - n + 1, 0);
+        int totalNgrams = Math.max(words.length - n + 1, 0);
 
         HashMap<String, Integer> matchCount = new HashMap<>();
 
-        for (int i = 0; i <= tokens.length - n; i++) {
+        for (int i = 0; i <= words.length - n; i++) {
 
             StringBuilder gram = new StringBuilder();
 
             for (int j = 0; j < n; j++) {
-                gram.append(tokens[i + j]).append(" ");
+                gram.append(words[i + j]).append(" ");
             }
 
             String ngram = gram.toString().trim();
@@ -60,26 +56,24 @@ class CodeSimilarityDetector {
             }
         }
 
-        System.out.println("Analyzing Code: " + codeId);
-        System.out.println("Extracted " + totalNgrams + " token-grams\n");
+        System.out.println("Checking Document: " + docId);
+        System.out.println("Extracted " + totalNgrams + " n-grams\n");
 
         for (String doc : matchCount.keySet()) {
 
             int matches = matchCount.get(doc);
-
             double similarity = (matches * 100.0) / totalNgrams;
 
-            System.out.println("Found " + matches +
-                    " matching token-grams with \"" + doc + "\"");
+            System.out.println("Matched with \"" + doc + "\"");
 
             System.out.printf("Similarity: %.2f%% ", similarity);
 
-            if (similarity > 60) {
-                System.out.println("(CODE COPYING DETECTED)");
-            } else if (similarity > 15) {
-                System.out.println("(Suspicious)");
+            if (similarity > 70) {
+                System.out.println("(DUPLICATE DOCUMENT)");
+            } else if (similarity > 20) {
+                System.out.println("(Similar Content)");
             } else {
-                System.out.println("(Low similarity)");
+                System.out.println("(Unique Document)");
             }
 
             System.out.println();
@@ -87,24 +81,24 @@ class CodeSimilarityDetector {
     }
 }
 
-public class  PlagiarismDetectionSystem{
+public class PlagiarismDetectionSystem {
 
     public static void main(String[] args) {
 
-        CodeSimilarityDetector detector = new CodeSimilarityDetector();
+        DocumentDeduplicator deduplicator = new DocumentDeduplicator();
 
-        String code1 =
-                "public int add(int a int b) { return a + b; }";
+        String doc1 =
+                "Machine learning is transforming modern data analysis and predictive systems";
 
-        String code2 =
-                "public int sum(int x int y) { return x + y; }";
+        String doc2 =
+                "Machine learning is transforming modern data analysis and prediction tools";
 
-        String newCode =
-                "public int addNumbers(int a int b) { return a + b; }";
+        String newDoc =
+                "Machine learning is transforming modern data analysis and predictive systems";
 
-        detector.addCode("code_001.java", code1);
-        detector.addCode("code_002.java", code2);
+        deduplicator.addDocument("doc_101.txt", doc1);
+        deduplicator.addDocument("doc_102.txt", doc2);
 
-        detector.analyzeCode("submission_123.java", newCode);
+        deduplicator.checkDuplicate("doc_200.txt", newDoc);
     }
 }
